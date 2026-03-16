@@ -1,0 +1,23 @@
+[project]
+name = "{AGENT_NAME}"
+version = "0.1.0"
+description = "{AGENT_DESCRIPTION}"
+dependencies = [
+    "google-adk[a2a]=1.25.0",
+]
+
+[tool.agent-starter-pack]
+# The built-in agent to use as a foundation
+base_template = "adk"
+
+# Template metadata (optional - falls back to [project] section)
+name = "Basic ADK A2A agent template"
+description = "Scaffold for a simple A2A ADK agent"
+
+# Override settings from the base template
+[tool.agent-starter-pack.settings]
+# This template will only support the 'agent_engine' deployment target
+deployment_targets = ["none"]
+frontend_type = "none"
+# Optional: Customize the directory name for agent files (default: "app")
+agent_directory = "app"
