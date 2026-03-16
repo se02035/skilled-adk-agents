@@ -16,11 +16,14 @@ License: MIT License
 Contact: [EMAIL_ADDRESS]
 Dependencies: google.adk.agents, tools.sample_weather_tool, .env
 """
-
+import logging
 import os
 from dotenv import load_dotenv
 from google.adk.agents import Agent
 from tools.sample_weather_tool import get_weather
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 
 load_dotenv()
 
@@ -28,6 +31,8 @@ ADK_AGENT_NAME = os.getenv('ADK_AGENT_NAME')
 ADK_AGENT_MODEL = os.getenv('ADK_AGENT_MODEL')
 ADK_AGENT_INSTRUCTION = os.getenv('ADK_AGENT_INSTRUCTION')
 ADK_AGENT_DESCRIPTION = os.getenv('ADK_AGENT_DESCRIPTION')
+
+logger.info("--- 🤖 Creating ADK Currency Agent... ---")
 
 root_agent = Agent(
     name=ADK_AGENT_NAME,
