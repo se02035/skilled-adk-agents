@@ -42,17 +42,37 @@ uv add google-adk
 *(Note: If the specific package name differs, e.g., `google-genai-adk`, update the package name here).*
 
 ### 3. Scaffold the Project Structure
-The folder `.context/examples/` contains a sample implementation of an ADK A2A agent. Use that structure when creating a new ADK agent solution. Follow these rules:
-
-- **Models**: Use the latest Gemini Flash Models (preview is OK).
-- **Typings**: Usage of Typings is a must. Stick to `pydantic`.
-
-The target folder for the new agent solution is under folder `src`.
-
-### 4. Verify the Setup
-Execute the newly created agent to confirm that the nested environment is configured correctly and runs without errors.
+Create the target directory for the new agent solution under `src/agents/` and copy the A2A enabled template files.
 
 ```bash
-# Run the ADK agent from the new path
-adk run "./src/agents/{AGENT_SOLUTION_NAME}/"
+# Create the target directory structure
+mkdir -p "src/agents/{AGENT_SOLUTION_NAME}"
+
+# Copy the template files from .context/examples/agent_template
+cp -r .context/examples/agent_template/* "src/agents/{AGENT_SOLUTION_NAME}/"
+
+# Customize the agent configuration in .env and pyproject.toml
+# Replace placeholders with actual values (e.g., using sed or manually)
+# Placeholders: {AGENT_NAME}, {AGENT_VERSION}, {AGENT_DESCRIPTION}, {AGENT_INSTRUCTION}, {TARGET_PORT}
+```
+
+Follow these rules for customization:
+- **Models**: Use the latest Gemini Flash Models (e.g., `gemini-2.5-flash`).
+- **Typings**: Usage of Typings is a must. Use `pydantic` for structured data.
+- **A2A Support**: The template includes `a2a_agent.py` to expose the agent via the A2A protocol.
+
+### 4. Verify the Setup
+Confirm the agent is configured correctly by running it in development mode or starting the A2A server.
+
+**Option A: ADK CLI (Development)**
+```bash
+# Run the ADK agent logic
+adk run "./src/agents/{AGENT_SOLUTION_NAME}/app/"
+```
+
+**Option B: A2A Server**
+```bash
+# Start the A2A enabled server
+export PYTHONPATH=$PYTHONPATH:$(pwd)/src/agents/{AGENT_SOLUTION_NAME}/app
+python "src/agents/{AGENT_SOLUTION_NAME}/app/a2a_agent.py"
 ```
