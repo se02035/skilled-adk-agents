@@ -4,7 +4,7 @@ Author: Oliver Lintner
 Date: 2026-02-22
 Version: 1.0
 Description: 
-    This script demonstrates a sample implementation of a Python function tool for ADK agents.
+    This script demonstrates a sample weather tool for ADK agent.
 
 License: MIT License
 Contact: [EMAIL_ADDRESS]

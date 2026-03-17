@@ -9,8 +9,8 @@
             "type": "debugpy",
             "request": "launch",
             "module": "google.adk.cli",
-            "cwd": "${workspaceFolder}/src",
-            "envFile": "${workspaceFolder}/src/.env",
+            "cwd": "${workspaceFolder}/currency_converter/src/agents/currency_converter/app",
+            "envFile": "${workspaceFolder}/currency_converter/src/agents/currency_converter/app/.env",
             "justMyCode": false,
             "args": [
                 "web",
@@ -23,7 +23,7 @@
             "name": "Python Debugger: Python File",
             "type": "debugpy",
             "request": "launch",
-            "envFile": "${workspaceFolder}/src/.env",
+            "envFile": "${workspaceFolder}/currency_converter/src/agents/currency_converter/app/.env",
             "program": "${file}"
         }
     ]

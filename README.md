@@ -1,5 +1,12 @@
 # README
 
+## Skills
+```sh
+npx skills add miticojo/adk-skill
+npx skills add https://github.com/vercel-labs/skills --skill find-skills
+```
+
+
 ## Setup
 ```sh
 sudo ./devcontainer/scripts/install-dependencies.sh
