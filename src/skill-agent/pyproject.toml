@@ -5,7 +5,8 @@ description = "A versatile assistant that can help with Gmail, finding skills, a
 
 dependencies = [
     "google-adk[a2a]==1.25.0",
-
+    "python-dotenv>=1.2.2",
+    "uvicorn>=0.42.0",
 ]
 
 [tool.agent-starter-pack]

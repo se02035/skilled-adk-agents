@@ -1,0 +1,6 @@
+dotenv
+google-adk
+python-dotenv
+uvicorn
+google-adk[a2a]
+fastmcp

@@ -9,8 +9,8 @@
             "type": "debugpy",
             "request": "launch",
             "module": "google.adk.cli",
-            "cwd": "${workspaceFolder}/currency_converter/src/agents/currency_converter/app",
-            "envFile": "${workspaceFolder}/currency_converter/src/agents/currency_converter/app/.env",
+            "cwd": "${workspaceFolder}/src/skill-agent",
+            "envFile": "${workspaceFolder}/src/skill-agent/app/.env",
             "justMyCode": false,
             "args": [
                 "web",
@@ -20,11 +20,20 @@
             ]
         },
         {
-            "name": "Python Debugger: Python File",
+            "name": "adk a2a",
             "type": "debugpy",
             "request": "launch",
-            "envFile": "${workspaceFolder}/currency_converter/src/agents/currency_converter/app/.env",
-            "program": "${file}"
+            "envFile": "${workspaceFolder}/src/skill-agent/app/.env",
+            "cwd": "${workspaceFolder}/src/skill-agent",
+            "program": "${workspaceFolder}/src/skill-agent/app/a2a_agent.py"
+        },
+        {
+            "name": "mcp skills",
+            "type": "debugpy",
+            "request": "launch",
+            "envFile": "${workspaceFolder}/src/mcp-skills-provider/.env",
+            "cwd": "${workspaceFolder}/src/mcp-skills-provider",
+            "program": "${workspaceFolder}/src/mcp-skills-provider/server.py"
         }
     ]
 }

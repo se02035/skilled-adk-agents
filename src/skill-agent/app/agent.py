@@ -16,6 +16,8 @@ License: MIT License
 Contact: [EMAIL_ADDRESS]
 Dependencies: google.adk.agents, tools.sample_weather_tool, .env
 """
+
+from google.genai._interactions.types import MCPServerToolCallContentParam
 import logging
 import os
 import pathlib
@@ -24,8 +26,8 @@ from dotenv import load_dotenv
 from google.adk.agents import Agent
 from google.adk.skills import models
 from google.adk.tools import skill_toolset
-from google.adk.tools.mcp_tool import McpToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams
+from google.adk.tools.mcp_tool import MCPToolset
+from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams, StreamableHTTPConnectionParams
 from mcp import StdioServerParameters
 from google.adk.agents.callback_context import CallbackContext
 from google.genai import types
@@ -37,7 +39,15 @@ logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 load_dotenv()
 
 def load_skill_from_dir(skill_path: pathlib.Path) -> models.Skill:
-    """Manually load a skill from a directory."""
+    """
+    Manually load a skill from a directory.
+
+    Args:
+        skill_path (pathlib.Path): The path to the skill directory.
+
+    Returns:
+        models.Skill: The loaded
+    """
     skill_md_path = skill_path / "SKILL.md"
     if not skill_md_path.exists():
         raise FileNotFoundError(f"SKILL.md not found in {skill_path}")
@@ -95,7 +105,7 @@ def load_skill_from_dir(skill_path: pathlib.Path) -> models.Skill:
     )
 
 ADK_AGENT_NAME = os.getenv('ADK_AGENT_NAME', 'skill-assistant')
-ADK_AGENT_MODEL = os.getenv('ADK_AGENT_MODEL', 'gemini-2.0-flash')
+ADK_AGENT_MODEL = os.getenv('ADK_AGENT_MODEL', 'gemini-2.5-flash')
 ADK_AGENT_INSTRUCTION = os.getenv('ADK_AGENT_INSTRUCTION', 'You are a helpful assistant.')
 ADK_AGENT_DESCRIPTION = os.getenv('ADK_AGENT_DESCRIPTION', 'A skills-based assistant.')
 
@@ -105,7 +115,10 @@ logger.info(f"--- 🤖 Creating ADK Agent: {ADK_AGENT_NAME} ---")
 ROOT_DIR = pathlib.Path(__file__).parent.parent.parent.parent
 SKILLS_DIR = ROOT_DIR / ".agents" / "skills"
 
-def load_tools() -> List:
+def load_tools() -> list:
+    """
+    collect agent tools
+    """
     loaded_skills = []
     if SKILLS_DIR.exists():
         for skill_path in SKILLS_DIR.iterdir():
@@ -121,10 +134,27 @@ def load_tools() -> List:
 
     # tools logic
     tools = []
-    if loaded_skills:
-        tools.append(skill_toolset.SkillToolset(skills=loaded_skills))
+    # if loaded_skills:
+    #     tools.append(skill_toolset.SkillToolset(skills=loaded_skills))
 
-    shell_runner = McpToolset(
+    # skills_provider = MCPToolset(
+    #             connection_params=StdioConnectionParams(
+    #                 server_params = StdioServerParameters(
+    #                     command='python',
+    #                     args=["/Users/oliverli/Dev/demo-speckit-skills/asp/src/mcp-skills-provider/server.py"],
+    #                 ),
+    #             ),
+    # )
+
+    MCP_SERVER_URL_SKILLS_PROVIDER = f"http://0.0.0.0:5555/mcp"
+    skills_provider = MCPToolset(
+        connection_params=StreamableHTTPConnectionParams(
+            url=MCP_SERVER_URL_SKILLS_PROVIDER
+        )
+    )
+    tools.append(skills_provider)
+
+    shell_runner = MCPToolset(
                 connection_params=StdioConnectionParams(
                     server_params = StdioServerParameters(
                         command='uv',
@@ -153,7 +183,8 @@ def before_agent_callback(callback_context: CallbackContext) -> Optional[types.C
     # filtered_tools = rag_filter_tools(user_query, all_tools)
 
     # Temporarily override tools for this invocation
-    callback_context.tools = load_tools()
+    #callback_context.tools = load_tools()
+    return None
 
 
 root_agent = Agent(
@@ -164,9 +195,5 @@ root_agent = Agent(
     tools=load_tools(),
     before_agent_callback=before_agent_callback
 )
-
-from google.adk.apps import App
-
-app = App(root_agent=root_agent, name="app")
 
 
