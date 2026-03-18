@@ -1,62 +1,72 @@
-from fastmcp.server.providers.skills.skill_provider import SkillResource
-import asyncio
+from fastmcp.resources import ResourceContent
+import os
 import logging
-
-from pygments.token import String
-from pathlib import Path
+import asyncio
 
 from fastmcp import FastMCP
+from fastmcp.server.providers.skills.skill_provider import SkillResource, ResourceResult
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
+from pydantic import BaseModel
+
+class SkillElement(BaseModel):
+    uri: str
+    description: str
+    name: str
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 
+SKILLS_DIRECTORY = os.getenv('SKILLS_DIRECTORY', 8001)
+
 mcp = FastMCP("Skills Server")
 mcp.add_provider(
-    SkillsDirectoryProvider(
-        roots=Path.home() / "Dev" / "demo-speckit-skills" / "asp" / ".agents" / "skills",
-        reload=True,)
-    )
+    SkillsDirectoryProvider(roots=SKILLS_DIRECTORY,reload=True))
+
+logger.info(f"Skills directory: {SKILLS_DIRECTORY}")
 
 @mcp.tool
-async def list_skills() -> list:
+async def list_skills() -> list[SkillElement]:
     """
     List all available skills resource ids
 
     Returns a URI per skills (e.g. skill://my-skill/SKILL.md)
     """
-    resources: list[SkillResource] = await mcp.providers[1].list_resources() 
-    elements = []
-    seen_names = set()
+    resources: list[SkillResource] = await mcp.list_resources()
+    unique_skills: dict[str, SkillElement] = {}
 
-    for skill in resources:
-        if skill.skill_info.name not in seen_names:
-            elements.append({
-                "uri": f"skill://{skill.skill_info.name}/SKILL.md", 
-                "description": skill.skill_info.description,
-                "name": skill.skill_info.name
-            })
-            seen_names.add(skill.skill_info.name)
+    for resource in resources:
+        info = resource.skill_info
+        if info.name not in unique_skills:
+            unique_skills[info.name] = SkillElement(
+                uri=f"skill://{info.name}/SKILL.md", 
+                description=info.description,
+                name=info.name
+            )
 
-    return elements
+    return list(unique_skills.values())
 
 @mcp.tool
-async def read_skill(skill_uri: str) -> String:
+async def read_skill(skill_uri: str) -> str:
     """
     Read the skill based on the provided skills URI.
     
     Returns:
         the content of the skills SKILL.md file
     """
-    skill: SkillResource = await mcp.providers[1].get_resource(skill_uri)
-    content = await skill.read()
+    content: str = ""
+    result: ResourceResult = await mcp.read_resource(skill_uri)
 
+    if result: 
+        content = result.contents[0].content
+    else:
+        content = f"Skill {skill_uri} not found"
+    
     return content
 
 if __name__ == "__main__":
-    PORT = 5555
+    PORT = int(os.getenv('PORT', 5555))
 
-    logger.info(f"MCP server started on port {PORT}")
+    logger.info(f"MCP server listening on port {PORT}")
     asyncio.run(
         mcp.run_async(
             transport="http",

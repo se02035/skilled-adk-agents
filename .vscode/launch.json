@@ -31,9 +31,12 @@
             "name": "mcp skills",
             "type": "debugpy",
             "request": "launch",
-            "envFile": "${workspaceFolder}/src/mcp-skills-provider/.env",
             "cwd": "${workspaceFolder}/src/mcp-skills-provider",
-            "program": "${workspaceFolder}/src/mcp-skills-provider/server.py"
+            "program": "${workspaceFolder}/src/mcp-skills-provider/server.py",
+            "env": {
+                "SKILLS_DIRECTORY": "${workspaceFolder}/.agents/skills",
+                "PORT": "5555"
+            }
         }
     ]
 }

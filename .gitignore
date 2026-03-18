@@ -3,3 +3,4 @@ __pycache__
 .venv
 .adk
 .DS_Store
+skills-lock.json
