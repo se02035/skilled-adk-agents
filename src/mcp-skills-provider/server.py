@@ -3,15 +3,12 @@ import os
 import logging
 import asyncio
 
+from dataclasses import dataclass
+
 from fastmcp import FastMCP
 from fastmcp.server.providers.skills.skill_provider import SkillResource, ResourceResult
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
-from pydantic import BaseModel
 
-class SkillElement(BaseModel):
-    uri: str
-    description: str
-    name: str
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
@@ -23,6 +20,14 @@ mcp.add_provider(
     SkillsDirectoryProvider(roots=SKILLS_DIRECTORY,reload=True))
 
 logger.info(f"Skills directory: {SKILLS_DIRECTORY}")
+
+
+@dataclass
+class SkillElement:
+    uri: str
+    description: str
+    name: str
+
 
 @mcp.tool
 async def list_skills() -> list[SkillElement]:

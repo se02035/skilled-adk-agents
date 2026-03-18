@@ -108,23 +108,23 @@ def load_tools() -> list:
     # )
     # tools.append(skills_provider)
 
-    # SHELL_RUNNER_ALLOWED_COMMANDS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_COMMANDS")
-    # shell_runner = MCPToolset(
-    #             connection_params=StdioConnectionParams(
-    #                 server_params = StdioServerParameters(
-    #                     command='uv',
-    #                     args=[
-    #                         "run",
-    #                         "mcp-shell-server"
-    #                     ],
-    #                     env= {
-    #                         "ALLOW_COMMANDS": SHELL_RUNNER_ALLOWED_COMMANDS
-    #                     }
-    #                 ),
-    #             ),
-    #             # Optional: Filter which tools from the MCP server are exposed
-    #         )
-    # tools.append(shell_runner)
+    SHELL_RUNNER_ALLOWED_COMMANDS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_COMMANDS")
+    shell_runner = MCPToolset(
+                connection_params=StdioConnectionParams(
+                    server_params = StdioServerParameters(
+                        command='uv',
+                        args=[
+                            "run",
+                            "mcp-shell-server"
+                        ],
+                        env= {
+                            "ALLOW_COMMANDS": SHELL_RUNNER_ALLOWED_COMMANDS
+                        }
+                    ),
+                ),
+                # Optional: Filter which tools from the MCP server are exposed
+            )
+    tools.append(shell_runner)
 
     return tools
 
