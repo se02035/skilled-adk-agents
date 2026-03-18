@@ -27,6 +27,7 @@ class SkillElement:
     uri: str
     description: str
     name: str
+    root_directory: str
 
 
 @mcp.tool
@@ -45,7 +46,8 @@ async def list_skills() -> list[SkillElement]:
             unique_skills[info.name] = SkillElement(
                 uri=f"skill://{info.name}/SKILL.md", 
                 description=info.description,
-                name=info.name
+                name=info.name,
+                root_directory=f"{SKILLS_DIRECTORY}/{info.name}"
             )
 
     return list(unique_skills.values())

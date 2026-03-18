@@ -20,7 +20,6 @@ Dependencies: google.adk.agents, tools.sample_weather_tool, .env
 import logging
 import os
 import pathlib
-from dotenv import load_dotenv
 
 from google.adk.agents import Agent
 from google.adk.skills import models
@@ -37,17 +36,12 @@ from mcp import StdioServerParameters
 
 from typing import Optional, Dict, Any
 
+from . import config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 
-load_dotenv()
-
-ADK_AGENT_NAME = os.getenv('ADK_AGENT_NAME', 'skill-assistant')
-ADK_AGENT_MODEL = os.getenv('ADK_AGENT_MODEL', 'gemini-2.5-flash')
-ADK_AGENT_INSTRUCTION = os.getenv('ADK_AGENT_INSTRUCTION', 'You are a helpful assistant.')
-ADK_AGENT_DESCRIPTION = os.getenv('ADK_AGENT_DESCRIPTION', 'A skills-based assistant.')
-SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", "")
+logger.info(config.ADK_AGENT_INSTRUCTION)
 
 
 def load_skills(skills_parent_path: pathlib.Path) -> list[models.Skill]:
@@ -87,40 +81,42 @@ def load_tools() -> list:
     # OPTION #1
     # USE THE ADK SKILLS FEATURE (RELOAD OF SKILLS IS NOT SUPPORTED CURENTLY)
     # ==============================
-    loaded_skills = load_skills(pathlib.Path(SKILLS_DIRECTORY))
+    # loaded_skills = load_skills(pathlib.Path(config.SKILLS_DIRECTORY))
 
-    if loaded_skills:
-        tools.append(
-            SkillToolset(
-                skills=loaded_skills,
-                code_executor=UnsafeLocalCodeExecutor())
-                )
+    # if loaded_skills:
+    #     tools.append(
+    #         SkillToolset(
+    #             skills=loaded_skills,
+    #             code_executor=UnsafeLocalCodeExecutor())
+    #             )
 
     # ==============================
     # OPTION #2
     # USE AN MCP SERVER TO PROVIDE SKILLS
     # ==============================
-    # MCP_SERVER_URL_SKILLS_PROVIDER = os.getenv("MCP_SKILLS_PROVIDER_ENDPOINT")
-    # skills_provider = MCPToolset(
-    #     connection_params=StreamableHTTPConnectionParams(
-    #         url=MCP_SERVER_URL_SKILLS_PROVIDER
-    #     )
-    # )
-    # tools.append(skills_provider)
 
-    SHELL_RUNNER_ALLOWED_COMMANDS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_COMMANDS")
+    skills_provider = MCPToolset(
+        connection_params=StreamableHTTPConnectionParams(
+            url=config.MCP_SERVER_URL_SKILLS_PROVIDER,
+            timeout=180
+        ),
+    )
+    tools.append(skills_provider)
+
     shell_runner = MCPToolset(
                 connection_params=StdioConnectionParams(
                     server_params = StdioServerParameters(
                         command='uv',
                         args=[
                             "run",
-                            "mcp-shell-server"
+                            "mcp-shell-server",
                         ],
                         env= {
-                            "ALLOW_COMMANDS": SHELL_RUNNER_ALLOWED_COMMANDS
+                            "ALLOW_COMMANDS": config.SHELL_RUNNER_ALLOWED_COMMANDS,
+                            "ALLOW_PATTERNS": config.SHELL_RUNNER_ALLOWED_PATTERNS,
                         }
                     ),
+                    timeout=180
                 ),
                 # Optional: Filter which tools from the MCP server are exposed
             )
@@ -129,15 +125,14 @@ def load_tools() -> list:
     return tools
 
 def before_tool_callback(tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext) -> Optional[Dict]:
-    WORKSPACE_DIRECTORY = os.getenv("MCP_SKILLS_PROVIDER_WORKSPACE_DIRECTORY")
     agent_name = tool_context.agent_name
     tool_name = tool.name
 
     # there seems to be a glitch in the implementation around the directory parameter.
     # we want to ensure that the execution directory is set to the workspace directory.
     if tool_name == "shell_execute":
-        if WORKSPACE_DIRECTORY:
-            args["directory"] = WORKSPACE_DIRECTORY
+        if config.WORKSPACE_DIRECTORY:
+            args["directory"] = config.WORKSPACE_DIRECTORY
             args["timeout"] = 30
 
         else:
@@ -147,10 +142,10 @@ def before_tool_callback(tool: BaseTool, args: Dict[str, Any], tool_context: Too
     
 
 root_agent = Agent(
-    name=ADK_AGENT_NAME,
-    model=ADK_AGENT_MODEL,
-    description=ADK_AGENT_DESCRIPTION,
-    instruction=ADK_AGENT_INSTRUCTION,
+    name=config.ADK_AGENT_NAME,
+    model=config.ADK_AGENT_MODEL,
+    description=config.ADK_AGENT_DESCRIPTION,
+    instruction=config.ADK_AGENT_INSTRUCTION,
     tools=load_tools(),
     before_tool_callback=before_tool_callback
 )

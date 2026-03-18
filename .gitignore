@@ -3,4 +3,9 @@ __pycache__
 .venv
 .adk
 .DS_Store
+.agent
+.gemini
 skills-lock.json
+node_modules
+*.docx
+*.png
