@@ -26,17 +26,17 @@ source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-2. **Install Agent Skills**
-Install the necessary skill packages using the `skills` CLI toolkit:
+1. **Configure Environment Variables**
+- Navigate to the `src/skill-agent/app` directory and locate/create the `.env` file.
+- Update the `.env` file settings. Define whether the ADK native SkillToolset should be used or the custom MCP server (Skills Provider). Comment out any code you do not need.
+
+1. **(Optional) Pre-Install Agent Skills**
+Pre-install the necessary skill packages using the `skills` CLI toolkit. This is optional as the agent can install skills dynamically.
 ```bash
 npx skills add https://github.com/vercel-labs/skills --skill find-skills
 ```
 
-3. **Configure Environment Variables**
-- Navigate to the `src/skill-agent/app` directory and locate/create the `.env` file.
-- Update the `.env` file settings. Define whether the ADK native SkillToolset should be used or the custom MCP server (Skills Provider). Comment out any code you do not need.
-
-4. **(Optional) Install Ngrok for Tunnels**
+1. **(Optional) Install Ngrok for Tunnels**
 If you plan to expose the A2A server to external services (like Gemini Enterprise), install ngrok:
 ```bash
 curl -sSL https://ngrok-agent.s3.amazonaws.com/ngrok.asc \
