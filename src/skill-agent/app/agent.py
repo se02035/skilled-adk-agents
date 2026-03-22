@@ -18,7 +18,6 @@ Dependencies: google.adk.agents, tools.sample_weather_tool, .env
 """
 
 import logging
-import os
 import pathlib
 
 from google.adk.agents import Agent
@@ -36,7 +35,7 @@ from mcp import StdioServerParameters
 
 from typing import Optional, Dict, Any
 
-from . import config
+import config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
@@ -133,7 +132,7 @@ def before_tool_callback(tool: BaseTool, args: Dict[str, Any], tool_context: Too
     if tool_name == "shell_execute":
         if config.WORKSPACE_DIRECTORY:
             args["directory"] = config.WORKSPACE_DIRECTORY
-            args["timeout"] = 30
+            args["timeout"] = 60
 
         else:
             logger.warning("MCP_SKILLS_PROVIDER_WORKSPACE_DIRECTORY not set")
@@ -149,5 +148,3 @@ root_agent = Agent(
     tools=load_tools(),
     before_tool_callback=before_tool_callback
 )
-
-
