@@ -1,5 +1,0 @@
-uv
-google-adk==1.27.1
-python-dotenv
-uvicorn
-ngrok
