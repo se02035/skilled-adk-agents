@@ -1,22 +1,3 @@
-"""
-Filename: agent.py
-Author: Oliver Lintner  
-Date: 2026-02-22
-Version: 1.0
-Description: 
-    This script demonstrates a sample ADK agent (called 'root_agent'). 
-    It demonstrates how to create an ADK agent with a tool.
-    The agent uses a .env file to load its configuration (e.g. model, tools, etc.)
-
-Validation:
-    Run the `root_agent` using Google ADKs `adk run` command starting a conversation with 'Hi'. 
-    The agent must successfully respond with a greeting.
-
-License: MIT License
-Contact: [EMAIL_ADDRESS]
-Dependencies: google.adk.agents, tools.sample_weather_tool, .env
-"""
-
 import logging
 import pathlib
 
@@ -42,9 +23,7 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
-
 logger.info(config.ADK_AGENT_INSTRUCTION)
-
 
 def load_skills(skills_parent_path: pathlib.Path) -> list[models.Skill]:
     """
