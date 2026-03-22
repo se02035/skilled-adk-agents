@@ -1,14 +1,10 @@
-from fastmcp.resources import ResourceContent
 import os
 import logging
 import asyncio
-
 from dataclasses import dataclass
-
 from fastmcp import FastMCP
 from fastmcp.server.providers.skills.skill_provider import SkillResource, ResourceResult
 from fastmcp.server.providers.skills import SkillsDirectoryProvider
-
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)

@@ -1,23 +1,13 @@
 import os
 from dotenv import load_dotenv
-import requests
+from pathlib import Path
 
 load_dotenv()
 
-def get_http_content(url: str) -> str:
-    """
-    Fetches the markdown content from the given URL.
-    """
-    try:
-        response = requests.get(url)
-        # Check if the request was successful
-        response.raise_for_status() 
-        return response.text
-    except requests.exceptions.RequestException as e:
-        return f"An error occurred while fetching the content: {e}"
-
-agent_skills_specification = get_http_content("https://agentskills.io/specification.md")
-
+# Determine the git root directory based on the location of config.py
+# config.py is at: <git_root>/src/skill-agent/app/config.py
+GIT_ROOT = Path(__file__).resolve().parent.parent.parent.parent
+DEFAULT_SKILLS_DIR = str(GIT_ROOT / ".agents" / "skills")
 
 ADK_AGENT_INSTRUCTION = """
 #AGENT INSTRUCTIONS:
@@ -42,11 +32,11 @@ Look up the specification to get more details around Skill resources like where 
 ADK_AGENT_NAME = os.getenv('ADK_AGENT_NAME', 'skill-assistant') 
 ADK_AGENT_MODEL = os.getenv('ADK_AGENT_MODEL', 'gemini-2.5-flash')
 ADK_AGENT_DESCRIPTION = os.getenv('ADK_AGENT_DESCRIPTION', 'A skills-based assistant.')
-SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", "")
+SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", DEFAULT_SKILLS_DIR)
 
 SHELL_RUNNER_ALLOWED_COMMANDS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_COMMANDS","")
 SHELL_RUNNER_ALLOWED_PATTERNS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_PATTERNS","")
 
 MCP_SERVER_URL_SKILLS_PROVIDER = os.getenv("MCP_SKILLS_PROVIDER_ENDPOINT")
 
-WORKSPACE_DIRECTORY = os.getenv("MCP_SKILLS_PROVIDER_WORKSPACE_DIRECTORY")
+WORKSPACE_DIRECTORY = os.getenv("MCP_SKILLS_PROVIDER_WORKSPACE_DIRECTORY", GIT_ROOT)

@@ -1,6 +1,6 @@
-dotenv
-google-adk
-python-dotenv
-uvicorn
+dotenv==0.9.9
+google-adk==1.27.2
+python-dotenv==1.2.2
+uvicorn==0.42.0
 google-adk[a2a]
-fastmcp
+fastmcp==3.1.1

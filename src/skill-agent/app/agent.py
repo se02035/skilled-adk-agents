@@ -35,7 +35,10 @@ from mcp import StdioServerParameters
 
 from typing import Optional, Dict, Any
 
-import config
+try:
+    from . import config
+except ImportError:
+    import config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
