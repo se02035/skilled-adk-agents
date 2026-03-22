@@ -29,13 +29,13 @@ The complete agent skills specification can be found under: https://agentskills.
 Look up the specification to get more details around Skill resources like where to find skills scripts, assets, etc.
 """
 
-ADK_AGENT_NAME = os.getenv('ADK_AGENT_NAME', 'skill-assistant') 
-ADK_AGENT_MODEL = os.getenv('ADK_AGENT_MODEL', 'gemini-2.5-flash')
-ADK_AGENT_DESCRIPTION = os.getenv('ADK_AGENT_DESCRIPTION', 'A skills-based assistant.')
+ADK_AGENT_NAME = os.getenv("ADK_AGENT_NAME", "skill-assistant")
+ADK_AGENT_MODEL = os.getenv("ADK_AGENT_MODEL", "gemini-2.5-flash")
+ADK_AGENT_DESCRIPTION = os.getenv("ADK_AGENT_DESCRIPTION", "A skills-based assistant.")
 SKILLS_DIRECTORY = os.getenv("SKILLS_DIRECTORY", DEFAULT_SKILLS_DIR)
 
-SHELL_RUNNER_ALLOWED_COMMANDS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_COMMANDS","")
-SHELL_RUNNER_ALLOWED_PATTERNS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_PATTERNS","")
+SHELL_RUNNER_ALLOWED_COMMANDS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_COMMANDS", "")
+SHELL_RUNNER_ALLOWED_PATTERNS = os.getenv("MCP_SHELL_RUNNER_ALLOWED_PATTERNS", "")
 
 MCP_SERVER_URL_SKILLS_PROVIDER = os.getenv("MCP_SKILLS_PROVIDER_ENDPOINT")
 

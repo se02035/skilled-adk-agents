@@ -11,7 +11,10 @@ from google.adk.tools.skill_toolset import SkillToolset
 from google.adk.skills import load_skill_from_dir
 
 from google.adk.tools.mcp_tool import MCPToolset
-from google.adk.tools.mcp_tool.mcp_session_manager import StdioConnectionParams, StreamableHTTPConnectionParams
+from google.adk.tools.mcp_tool.mcp_session_manager import (
+    StdioConnectionParams,
+    StreamableHTTPConnectionParams,
+)
 from mcp import StdioServerParameters
 
 from typing import Optional, Dict, Any
@@ -25,6 +28,7 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 logger.info(config.ADK_AGENT_INSTRUCTION)
 
+
 def load_skills(skills_parent_path: pathlib.Path) -> list[models.Skill]:
     """
     Manually load a skill from a directory.
@@ -33,24 +37,25 @@ def load_skills(skills_parent_path: pathlib.Path) -> list[models.Skill]:
         skill_path (pathlib.Path): The path to the skill directory.
 
     Returns:
-        a list of models.Skill: The loaded skills. one found directory per 
+        a list of models.Skill: The loaded skills. one found directory per
     """
     loaded_skills = []
-    
+
     # Iterate through the parent directory
     for skill_path in skills_parent_path.iterdir():
         # Check if the item is a folder
         if skill_path.is_dir():
             # Get the full absolute path as a string
             full_path = str(skill_path.resolve())
-            
+
             # Load the Skill object and append it to our list
             skill = load_skill_from_dir(full_path)
             loaded_skills.append(skill)
 
             logger.info(f"Successfully loaded skill: {full_path}")
-    
+
     return loaded_skills
+
 
 def load_tools() -> list:
     """
@@ -78,34 +83,36 @@ def load_tools() -> list:
 
     skills_provider = MCPToolset(
         connection_params=StreamableHTTPConnectionParams(
-            url=config.MCP_SERVER_URL_SKILLS_PROVIDER,
-            timeout=180
+            url=config.MCP_SERVER_URL_SKILLS_PROVIDER, timeout=180
         ),
     )
     tools.append(skills_provider)
 
     shell_runner = MCPToolset(
-                connection_params=StdioConnectionParams(
-                    server_params = StdioServerParameters(
-                        command='uv',
-                        args=[
-                            "run",
-                            "mcp-shell-server",
-                        ],
-                        env= {
-                            "ALLOW_COMMANDS": config.SHELL_RUNNER_ALLOWED_COMMANDS,
-                            "ALLOW_PATTERNS": config.SHELL_RUNNER_ALLOWED_PATTERNS,
-                        }
-                    ),
-                    timeout=180
-                ),
-                # Optional: Filter which tools from the MCP server are exposed
-            )
+        connection_params=StdioConnectionParams(
+            server_params=StdioServerParameters(
+                command="uv",
+                args=[
+                    "run",
+                    "mcp-shell-server",
+                ],
+                env={
+                    "ALLOW_COMMANDS": config.SHELL_RUNNER_ALLOWED_COMMANDS,
+                    "ALLOW_PATTERNS": config.SHELL_RUNNER_ALLOWED_PATTERNS,
+                },
+            ),
+            timeout=180,
+        ),
+        # Optional: Filter which tools from the MCP server are exposed
+    )
     tools.append(shell_runner)
 
     return tools
 
-def before_tool_callback(tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext) -> Optional[Dict]:
+
+def before_tool_callback(
+    tool: BaseTool, args: Dict[str, Any], tool_context: ToolContext
+) -> Optional[Dict]:
     agent_name = tool_context.agent_name
     tool_name = tool.name
 
@@ -120,7 +127,7 @@ def before_tool_callback(tool: BaseTool, args: Dict[str, Any], tool_context: Too
             logger.warning("MCP_SKILLS_PROVIDER_WORKSPACE_DIRECTORY not set")
 
     return None
-    
+
 
 root_agent = Agent(
     name=config.ADK_AGENT_NAME,
@@ -128,5 +135,5 @@ root_agent = Agent(
     description=config.ADK_AGENT_DESCRIPTION,
     instruction=config.ADK_AGENT_INSTRUCTION,
     tools=load_tools(),
-    before_tool_callback=before_tool_callback
+    before_tool_callback=before_tool_callback,
 )
