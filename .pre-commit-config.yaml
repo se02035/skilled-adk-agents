@@ -1,0 +1,21 @@
+# See https://pre-commit.com/hooks.html
+default_stages: [pre-commit]
+
+repos:
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.15.11
+    hooks:
+      - id: ruff
+        args: [--fix]
+      - id: ruff-format
+
+  - repo: local
+    hooks:
+      - id: pyright
+        name: pyright
+        language: python
+        additional_dependencies: [pyright>=1.1.350]
+        entry: pyright
+        pass_filenames: false
+        always_run: true
+        args: [--project, .]

@@ -1,0 +1,4 @@
+# Dev-only: linting, typecheck, git hooks (install with: pip install -r requirements-dev.txt)
+pre-commit>=4.0
+pyright>=1.1.350
+ruff>=0.8.0

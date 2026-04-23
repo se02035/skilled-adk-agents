@@ -1,11 +1,9 @@
-import os
 import asyncio
-from dotenv import load_dotenv
-from google.adk.a2a.utils.agent_to_a2a import to_a2a
-from google.adk.a2a.utils.agent_card_builder import AgentCardBuilder
-from agent import root_agent
+import os
 
-load_dotenv()
+from agent import root_agent
+from google.adk.a2a.utils.agent_card_builder import AgentCardBuilder
+from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
 # this is the port of the A2A server
 A2A_HOST = os.getenv("A2A_HOST", "0.0.0.0")
