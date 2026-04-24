@@ -122,11 +122,12 @@ async def read_skill(skill_uri: str) -> str:
 if __name__ == "__main__":
     PORT = int(os.getenv("PORT", 5555))
 
-    logger.info(f"MCP server listening on port {PORT}")
+    logger.info(f"MCP server listening on port {PORT} (stateless HTTP)")
     asyncio.run(
         mcp.run_async(
             transport="http",
             host="0.0.0.0",
             port=PORT,
+            stateless_http=True,
         )
     )
