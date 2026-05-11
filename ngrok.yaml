@@ -1,0 +1,10 @@
+version: 2
+authtoken: <YOUR_NGROK_AUTH_TOKEN>
+tunnels:
+  project1:
+    addr: 5555
+    proto: http
+
+  project2:
+    addr: 8008
+    proto: http

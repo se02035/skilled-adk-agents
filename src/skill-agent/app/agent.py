@@ -1,7 +1,11 @@
+import os
 import logging
 import pathlib
 from typing import Any, cast
 
+from google.adk.integrations.agent_registry import AgentRegistry
+from google.adk.models import LiteLlm
+from google.auth import default
 from google.adk.agents import Agent
 from google.adk.agents.callback_context import CallbackContext
 from google.adk.agents.llm_agent import ToolUnion
@@ -28,6 +32,14 @@ logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 logger.info(config.ADK_AGENT_INSTRUCTION)
 
+# _, project_id = default()
+# MCP_SERVER_NAME = os.environ.get("MCP_SERVER_NAME", "agentregistry-00000000-0000-0000-9230-8651d32534a6")
+# os.environ["GOOGLE_GENAI_USE_VERTEXAI"] = "True"
+# registry = AgentRegistry(project_id=project_id, location="us-central1")
+
+# mcp_toolset = registry.get_mcp_toolset(
+#     f"projects/crafty-progress-421108/locations/us-central1/mcpServers/agentregistry-00000000-0000-0000-9230-8651d32534a6"
+# )
 
 def load_skills(skills_parent_path: pathlib.Path) -> list[models.Skill]:
     """Load every ADK skill found in immediate subdirectories of a folder.
@@ -97,13 +109,13 @@ def load_tools() -> list[ToolUnion]:
         )
         raise ValueError(msg)
 
-    skills_provider = MCPToolset(
+    mcp_toolset = MCPToolset(
         connection_params=StreamableHTTPConnectionParams(
             url=skills_url,
             timeout=180,
         ),
     )
-    tools.append(skills_provider)
+    tools.append(mcp_toolset)
 
     shell_runner = MCPToolset(
         connection_params=StdioConnectionParams(
@@ -225,10 +237,18 @@ def before_model_callback(
 
     return None
 
+model = LiteLlm(
+    api_base=config.LITELLM_PROXY_API_BASE,
+    api_key=config.LITELLM_PROXY_API_KEY,
+    model=config.LITELLM_PROXY_MODEL,
+)
+
+# gemini model
+# model=config.ADK_AGENT_MODEL
 
 root_agent = Agent(
     name=config.ADK_AGENT_NAME,
-    model=config.ADK_AGENT_MODEL,
+    model=model,
     description=config.ADK_AGENT_DESCRIPTION,
     instruction=config.ADK_AGENT_INSTRUCTION,
     tools=load_tools(),

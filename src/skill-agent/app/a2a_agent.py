@@ -1,7 +1,10 @@
 import asyncio
+import logging
 import os
 
 from agent import root_agent
+
+logger = logging.getLogger(__name__)
 from google.adk.a2a.utils.agent_card_builder import AgentCardBuilder
 from google.adk.a2a.utils.agent_to_a2a import to_a2a
 
@@ -24,5 +27,7 @@ a2a_app = to_a2a(root_agent, port=A2A_PORT, agent_card=card)
 if __name__ == "__main__":
     import uvicorn
 
+    logger.info(f"Running A2A server on {A2A_HOST}:{A2A_PORT}")
+    logger.info(f"A2A agent card URL: {a2a_agent_endpoint}/.well-known/agent-card.json")
     # run the A2A server
     uvicorn.run(a2a_app, host=A2A_HOST, port=A2A_PORT, log_level="info")
