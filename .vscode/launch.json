@@ -35,7 +35,8 @@
             "program": "${workspaceFolder}/src/mcp-skills-provider/server.py",
             "env": {
                 "SKILLS_DIRECTORY": "${workspaceFolder}/.agents/skills",
-                "PORT": "5555"
+                "PORT": "5555",
+                "MCP_GOOGLE_AUTH_ENABLED": "false"
             }
         }
     ]
