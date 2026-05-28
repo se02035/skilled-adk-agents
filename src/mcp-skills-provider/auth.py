@@ -1,6 +1,5 @@
-from fastmcp.server.auth.providers.google import GoogleTokenVerifier
-
 from config import Settings
+from fastmcp.server.auth.providers.google import GoogleTokenVerifier
 
 
 def build_auth(settings: Settings) -> GoogleTokenVerifier | None:

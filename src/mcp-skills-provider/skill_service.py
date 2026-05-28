@@ -1,11 +1,10 @@
 import logging
 from typing import cast
 
+from config import Settings
 from fastmcp import FastMCP
 from fastmcp.resources import ResourceResult
 from fastmcp.server.providers.skills.skill_provider import SkillResource
-
-from config import Settings
 from models import SkillElement
 
 logger = logging.getLogger(__name__)
@@ -65,8 +64,7 @@ class SkillService:
                 return self._text_content(result.contents[0].content)
 
         return (
-            f"Skill {skill_uri} not found. Call list_skills and pass an exact URI "
-            "from that result."
+            f"Skill {skill_uri} not found. Call list_skills and pass an exact URI from that result."
         )
 
     @staticmethod

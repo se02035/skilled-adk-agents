@@ -1,10 +1,9 @@
 import logging
 
-from fastmcp import FastMCP
-from fastmcp.server.providers.skills import SkillsDirectoryProvider
-
 from auth import build_auth
 from config import Settings
+from fastmcp import FastMCP
+from fastmcp.server.providers.skills import SkillsDirectoryProvider
 from models import SkillElement
 from skill_service import SkillService
 
@@ -13,9 +12,7 @@ logger = logging.getLogger(__name__)
 
 def create_app(settings: Settings) -> FastMCP:
     mcp = FastMCP("Skills Server", auth=build_auth(settings))
-    mcp.add_provider(
-        SkillsDirectoryProvider(roots=settings.skills_directory, reload=True)
-    )
+    mcp.add_provider(SkillsDirectoryProvider(roots=settings.skills_directory, reload=True))
 
     skill_service = SkillService(settings)
 
@@ -23,9 +20,7 @@ def create_app(settings: Settings) -> FastMCP:
     if settings.google_auth_enabled:
         logger.info("Google token verification enabled")
     else:
-        logger.warning(
-            "MCP auth disabled — HTTP requests will not require a Bearer token"
-        )
+        logger.warning("MCP auth disabled — HTTP requests will not require a Bearer token")
 
     @mcp.tool
     async def list_skills() -> list[SkillElement]:
