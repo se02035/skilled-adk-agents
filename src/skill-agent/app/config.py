@@ -172,7 +172,9 @@ def resolve_agent_model() -> str | LiteLlm:
         msg = f"ADK_AGENT_MODEL=litellm requires: {', '.join(missing)}"
         raise ValueError(msg)
     if api_base is None or model is None or virtual_key is None:
-        msg = "ADK_AGENT_MODEL=litellm requires LITELLM_API_BASE, LITELLM_MODEL, LITELLM_VIRTUAL_KEY"
+        msg = (
+            "ADK_AGENT_MODEL=litellm requires LITELLM_API_BASE, LITELLM_MODEL, LITELLM_VIRTUAL_KEY"
+        )
         raise ValueError(msg)
 
     from google.adk.models.lite_llm import LiteLlm

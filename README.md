@@ -93,21 +93,23 @@ This installs the ADK app stack (`google-adk`, MCP, etc.); see `requirements.txt
 
 ### 2. (Optional) Development tooling and git hooks
 
-If you are contributing or want local linting and pre-commit (ruff, pyright — see `pyproject.toml` and `.pre-commit-config.yaml`):
+Linting is defined in [`.pre-commit-config.yaml`](.pre-commit-config.yaml) (ruff, ruff-format, pyright). GitHub Actions runs the same hooks via [`scripts/ci-lint.sh`](scripts/ci-lint.sh).
+
+**Replicate the CI lint job locally** (fresh or existing clone):
 
 ```bash
-pip install -r requirements-dev.txt
+./scripts/ci-lint.sh
+```
+
+For day-to-day development with git hooks:
+
+```bash
+pip install -r requirements.txt -r requirements-dev.txt
 pre-commit install
 pre-commit run --all-files
 ```
 
-You can also run linters directly:
-
-```bash
-ruff check src
-ruff format src
-pyright
-```
+`pre-commit run --all-files` uses the same hook config as CI; `ci-lint.sh` also ensures `.venv` and app dependencies exist so pyright can resolve imports.
 
 ### 3. Environment variables
 
