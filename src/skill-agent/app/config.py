@@ -1,7 +1,13 @@
+from __future__ import annotations
+
 import os
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from dotenv import load_dotenv
+
+if TYPE_CHECKING:
+    from google.adk.models.lite_llm import LiteLlm
 
 load_dotenv(Path(__file__).resolve().parent / ".env")
 
@@ -114,3 +120,70 @@ ADK_AGENT_LLM_RETRY_MAX_DELAY_SECONDS = float(
     os.getenv("ADK_AGENT_LLM_RETRY_MAX_DELAY_SECONDS", "30.0")
 )
 ADK_AGENT_LLM_RETRY_EXP_BASE = float(os.getenv("ADK_AGENT_LLM_RETRY_EXP_BASE", "2.0"))
+
+# LiteLLM proxy (used when ADK_AGENT_MODEL=litellm)
+LITELLM_API_BASE = os.getenv("LITELLM_API_BASE")
+LITELLM_MODEL = os.getenv("LITELLM_MODEL")
+LITELLM_VIRTUAL_KEY = os.getenv("LITELLM_VIRTUAL_KEY")
+
+
+def is_litellm_mode() -> bool:
+    """Return True when ADK_AGENT_MODEL selects the LiteLLM proxy backend."""
+    return ADK_AGENT_MODEL.strip().lower() == "litellm"
+
+
+def _normalize_litellm_api_base(api_base: str) -> str:
+    """Normalize a LiteLLM proxy base URL for OpenAI-compatible routing."""
+    normalized = api_base.rstrip("/")
+    if normalized.endswith("/v1"):
+        normalized = normalized[:-3]
+    return normalized
+
+
+def resolve_agent_model() -> str | LiteLlm:
+    """Resolve the model passed to the root Agent.
+
+    When ``ADK_AGENT_MODEL`` is ``litellm`` (case-insensitive), returns a
+    ``LiteLlm`` wrapper configured from ``LITELLM_*`` env vars. Otherwise
+    returns ``ADK_AGENT_MODEL`` as a native ADK model id string.
+
+    In LiteLLM mode, set ``LITELLM_MODEL`` to the exact **Model Name** shown in
+    the LiteLLM Model Management UI (e.g. ``ollama/gemma3:4b.ollama``,
+    ``gemini-2.5-flash``, ``gemini-3.1-pro-preview``). Any model registered on
+    the proxy works; the virtual key must be allowed to access that model.
+    """
+    if not is_litellm_mode():
+        return ADK_AGENT_MODEL
+
+    api_base = LITELLM_API_BASE
+    model = LITELLM_MODEL
+    virtual_key = LITELLM_VIRTUAL_KEY
+
+    missing = [
+        name
+        for name, val in [
+            ("LITELLM_API_BASE", api_base),
+            ("LITELLM_MODEL", model),
+            ("LITELLM_VIRTUAL_KEY", virtual_key),
+        ]
+        if not val
+    ]
+    if missing:
+        msg = f"ADK_AGENT_MODEL=litellm requires: {', '.join(missing)}"
+        raise ValueError(msg)
+    if api_base is None or model is None or virtual_key is None:
+        msg = (
+            "ADK_AGENT_MODEL=litellm requires LITELLM_API_BASE, LITELLM_MODEL, LITELLM_VIRTUAL_KEY"
+        )
+        raise ValueError(msg)
+
+    from google.adk.models.lite_llm import LiteLlm
+
+    return LiteLlm(
+        model=model,
+        api_base=_normalize_litellm_api_base(api_base),
+        api_key=virtual_key,
+        # Route through the proxy's OpenAI-compatible API, not native provider APIs
+        # (e.g. Ollama /api/generate) inferred from model names like gemma3:4b.ollama.
+        custom_llm_provider="openai",
+    )
