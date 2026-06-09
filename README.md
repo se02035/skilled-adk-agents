@@ -40,8 +40,8 @@ flowchart LR
         SKILLS[.agents/skills installed skills SKILL.md and scripts]
     end
 
-    subgraph Cloud[Google Cloud / Vertex AI]
-        MODEL[Gemini Model]
+    subgraph Cloud[LLM Backend]
+        MODEL["Gemini or LiteLLM proxy"]
     end
 
     U --> ADKWeb
@@ -120,6 +120,24 @@ pyright
 2. Edit `src/skill-agent/app/.env` and set at least the Google Cloud / Vertex and agent settings (see the comments in `.env.example`). If you use the **in-repo MCP Skills Provider** (HTTP on port `5555` by default), keep `MCP_SKILLS_PROVIDER_ENDPOINT` in sync, or point it to your own MCP server.
 
 `config` loads this file from `app/.env` automatically (you do not need a duplicate `.env` in the repo root for normal runs from `src/skill-agent`).
+
+#### LiteLLM proxy
+
+To route LLM calls through a [LiteLLM](https://docs.litellm.ai/) proxy instead of Gemini/Gemini Enterprise Agent Platform directly, set:
+
+```bash
+ADK_AGENT_MODEL=litellm
+LITELLM_API_BASE=http://localhost:4000
+LITELLM_MODEL=gemini-2.5-flash
+LITELLM_VIRTUAL_KEY=sk-...
+```
+
+- `ADK_AGENT_MODEL` — set to `litellm` (case-insensitive) to enable proxy mode; any other value is used as a native ADK model id (e.g. `gemini-3.5-flash`).
+- `LITELLM_API_BASE` — LiteLLM proxy root URL (e.g. `http://localhost:4000`; do not include `/v1`).
+- `LITELLM_MODEL` — exact **Model Name** from LiteLLM Model Management. Any model on the proxy works; switch by changing this value only. Examples: `ollama/gemma3:4b.ollama`, `gemini-2.5-flash`, `gemini-3.1-pro-preview`. Use the full name (e.g. `ollama/gemma3:4b.ollama`, not `gemma3:4b.ollama`).
+- `LITELLM_VIRTUAL_KEY` — virtual key with access to the chosen model.
+
+Google Cloud / Vertex variables are not required in LiteLLM mode.
 
 ### 4. (Optional) Pre-install agent skills
 

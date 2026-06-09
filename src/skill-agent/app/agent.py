@@ -216,7 +216,8 @@ def before_model_callback(
         http_status_codes=[408, 429, 500, 502, 503, 504],
     )
 
-    if config.ADK_AGENT_PRIORITY_PAYGO_ENABLED:
+    # We want to use PrioPaygo (Paygo is not supported for litellm mode)
+    if config.ADK_AGENT_PRIORITY_PAYGO_ENABLED and not config.is_litellm_mode():
         headers = llm_request.config.http_options.headers or {}
         headers[config.ADK_AGENT_PRIORITY_PAYGO_HEADER_NAME] = (
             config.ADK_AGENT_PRIORITY_PAYGO_HEADER_VALUE
@@ -226,9 +227,17 @@ def before_model_callback(
     return None
 
 
+_agent_model = config.resolve_agent_model()
+if config.is_litellm_mode():
+    logger.info(
+        "LiteLLM proxy: base=%s model=%s",
+        config.LITELLM_API_BASE,
+        config.LITELLM_MODEL,
+    )
+
 root_agent = Agent(
     name=config.ADK_AGENT_NAME,
-    model=config.ADK_AGENT_MODEL,
+    model=_agent_model,
     description=config.ADK_AGENT_DESCRIPTION,
     instruction=config.ADK_AGENT_INSTRUCTION,
     tools=load_tools(),
