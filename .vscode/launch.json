@@ -38,6 +38,23 @@
                 "PORT": "5555",
                 "MCP_GOOGLE_AUTH_ENABLED": "false"
             }
+        },
+        {
+            "name": "mcp skills apps preview",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "fastmcp.cli",
+            "cwd": "${workspaceFolder}/src/mcp-skills-provider",
+            "python": "${workspaceFolder}/.venv/bin/python",
+            "args": [
+                "dev",
+                "apps",
+                "server.py"
+            ],
+            "env": {
+                "SKILLS_DIRECTORY": "${workspaceFolder}/.agents/skills",
+                "MCP_GOOGLE_AUTH_ENABLED": "false"
+            }
         }
     ]
 }

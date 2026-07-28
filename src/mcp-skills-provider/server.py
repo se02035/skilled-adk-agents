@@ -7,11 +7,11 @@ from config import Settings
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+settings = Settings.from_env()
+mcp = create_app(settings)
+
 
 def main() -> None:
-    settings = Settings.from_env()
-    mcp = create_app(settings)
-
     logger.info("MCP server listening on port %s", settings.port)
     asyncio.run(
         mcp.run_async(

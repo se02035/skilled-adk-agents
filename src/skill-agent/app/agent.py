@@ -65,7 +65,8 @@ def load_tools() -> list[ToolUnion]:
     """Assemble the tool list passed to the root agent (MCP toolsets).
 
     Currently registers: (1) a streamable-HTTP skills provider (``list_skills``,
-    ``read_skill``, etc.) and (2) a stdio ``mcp-shell-server`` for ``shell_execute``.
+    ``read_skill`` only — Prefab ``explore_skills`` is filtered out) and (2) a
+    stdio ``mcp-shell-server`` for ``shell_execute``.
 
     Returns:
         A list of ``BaseToolset`` instances (``MCPToolset``) configured from
@@ -102,6 +103,8 @@ def load_tools() -> list[ToolUnion]:
             url=skills_url,
             timeout=180,
         ),
+        # Prefab explorer UI is for humans / Apps hosts — keep agent on data tools only.
+        tool_filter=["list_skills", "read_skill"],
     )
     tools.append(skills_provider)
 

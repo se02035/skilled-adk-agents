@@ -4,4 +4,5 @@ litellm==1.83.14
 python-dotenv==1.2.2
 uvicorn==0.42.0
 google-adk[a2a]
-fastmcp==3.2.4
+fastmcp[apps]==3.2.4
+prefab-ui==0.20.2

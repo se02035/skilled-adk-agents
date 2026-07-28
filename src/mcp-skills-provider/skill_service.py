@@ -1,5 +1,4 @@
 import logging
-from typing import cast
 
 from config import Settings
 from fastmcp import FastMCP
@@ -15,11 +14,10 @@ class SkillService:
         self._settings = settings
 
     async def list_skills(self, mcp: FastMCP) -> list[SkillElement]:
-        resources = cast(list[SkillResource], await mcp.list_resources())
         unique_skills: dict[str, SkillElement] = {}
         skills_dir = self._settings.skills_directory
 
-        for resource in resources:
+        for resource in await self._skill_resources(mcp):
             info = resource.skill_info
             if info.name not in unique_skills:
                 unique_skills[info.name] = SkillElement(
@@ -44,9 +42,8 @@ class SkillService:
         except Exception:
             pass
 
-        resources = cast(list[SkillResource], await mcp.list_resources())
         by_name: dict[str, str] = {}
-        for resource in resources:
+        for resource in await self._skill_resources(mcp):
             info = resource.skill_info
             by_name[info.name.lower()] = f"skill://{info.name}/SKILL.md"
 
@@ -66,6 +63,12 @@ class SkillService:
         return (
             f"Skill {skill_uri} not found. Call list_skills and pass an exact URI from that result."
         )
+
+    @staticmethod
+    async def _skill_resources(mcp: FastMCP) -> list[SkillResource]:
+        # Other providers (e.g. Prefab explorer) also register resources; only
+        # SkillResource entries carry skill_info.
+        return [r for r in await mcp.list_resources() if isinstance(r, SkillResource)]
 
     @staticmethod
     def _text_content(data: str | bytes) -> str:

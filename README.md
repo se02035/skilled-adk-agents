@@ -178,6 +178,26 @@ python server.py
 
 You can also use the MCP inspector or other clients; the critical part is that the URL in `.env` matches a running process.
 
+#### Skills explorer UI (FastMCP Apps)
+
+The skills provider exposes two presentations of the same `SkillService` data:
+
+- **Agent / ADK:** `list_skills` and `read_skill` return structured JSON/text. The ADK agent is filtered to only these tools.
+- **Humans:** `explore_skills` opens a Prefab tile grid and loads skill content when you open a skill.
+
+Interactive Prefab UIs render only in hosts that support the [MCP Apps extension](https://modelcontextprotocol.io/docs/extensions/apps), or in the local apps preview. The ADK web chat does **not** paint Prefab iframes.
+
+**VS Code / Cursor:** Run and Debug → `mcp skills apps preview` (uses the project `.venv`).
+
+**Terminal** (venv active):
+
+```bash
+cd src/mcp-skills-provider
+fastmcp dev apps server.py
+```
+
+Open `http://localhost:8080`, pick `explore_skills`, and browse the skill tiles.
+
 ### Run using Google’s ADK web tool
 The ADK web UI is for day-to-day development and chat against the agent.
 
