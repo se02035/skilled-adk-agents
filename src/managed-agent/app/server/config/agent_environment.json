@@ -1,0 +1,8 @@
+{
+  "type": "remote",
+  "network": {
+    "allowlist": [
+      {"domain": "*"}
+    ]
+  }
+}

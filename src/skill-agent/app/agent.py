@@ -1,5 +1,7 @@
 import logging
 import pathlib
+import re
+from pathlib import Path
 from typing import Any, cast
 
 from google.adk.agents import Agent
@@ -21,8 +23,10 @@ from mcp import StdioServerParameters
 
 try:
     from . import config
+    from .attachments import sanitize_unsupported_inline_attachments
 except ImportError:
     import config
+    from attachments import sanitize_unsupported_inline_attachments
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="[%(levelname)s]: %(message)s", level=logging.INFO)
@@ -30,66 +34,56 @@ logger.info(config.ADK_AGENT_INSTRUCTION)
 
 
 def load_skills(skills_parent_path: pathlib.Path) -> list[models.Skill]:
-    """Load every ADK skill found in immediate subdirectories of a folder.
-
-    For each child directory under ``skills_parent_path``, calls ``load_skill_from_dir``
-    and collects the resulting ``models.Skill`` instance.
-
-    Args:
-        skills_parent_path: Path to a directory whose direct child folders are
-            skill roots (each containing a skill definition, e.g. ``SKILL.md``).
-
-    Returns:
-        A list of ``models.Skill``, one entry per child directory that was loaded.
-        The list is empty if there are no subdirectories or none load successfully.
-    """
+    """Load every ADK skill found in immediate subdirectories of a folder."""
     loaded_skills = []
 
-    # Iterate through the parent directory
     for skill_path in skills_parent_path.iterdir():
-        # Check if the item is a folder
         if skill_path.is_dir():
-            # Get the full absolute path as a string
             full_path = str(skill_path.resolve())
-
-            # Load the Skill object and append it to our list
             skill = load_skill_from_dir(full_path)
             loaded_skills.append(skill)
-
             logger.info(f"Successfully loaded skill: {full_path}")
 
     return loaded_skills
+
+
+def _harden_npx_command(command: str) -> str:
+    """Make npx invocations non-interactive for skills installs."""
+    stripped = command.strip()
+    if not stripped.startswith("npx"):
+        return command
+
+    if not re.search(r"(?:^|\s)(?:--yes|-y)(?:\s|$)", stripped):
+        stripped = re.sub(r"^npx\s+", "npx --yes ", stripped, count=1)
+
+    if re.search(r"\bskills\s+add\b", stripped) and not re.search(
+        r"(?:^|\s)-y(?:\s|$)", stripped
+    ):
+        stripped = stripped.rstrip() + " -y"
+
+    return stripped
+
+
+def _is_skills_install(command: str) -> bool:
+    return bool(re.search(r"\bnpx\b.*\bskills\s+add\b", command))
+
+
+def _wrap_workspace_command(command: str, workspace: str) -> str:
+    workspace_path = str(Path(workspace).resolve())
+    cmd = command.strip()
+    if cmd.startswith(f"cd {workspace_path}") or cmd.startswith(f"cd '{workspace_path}'"):
+        return cmd
+    return f"cd {workspace_path} && {cmd}"
 
 
 def load_tools() -> list[ToolUnion]:
     """Assemble the tool list passed to the root agent (MCP toolsets).
 
     Currently registers: (1) a streamable-HTTP skills provider (``list_skills``,
-    ``read_skill``, etc.) and (2) a stdio ``mcp-shell-server`` for ``shell_execute``.
-
-    Returns:
-        A list of ``BaseToolset`` instances (``MCPToolset``) configured from
-        ``config`` (endpoints, workspace, shell allowlists, timeouts).
+    ``read_skill``) and (2) Desktop Commander for shell execution only.
     """
     tools: list[BaseToolset] = []
 
-    # ==============================
-    # OPTION #1
-    # USE THE ADK SKILLS FEATURE (RELOAD OF SKILLS IS NOT SUPPORTED CURENTLY)
-    # ==============================
-    # loaded_skills = load_skills(pathlib.Path(config.SKILLS_DIRECTORY))
-
-    # if loaded_skills:
-    #     tools.append(
-    #         SkillToolset(
-    #             skills=loaded_skills,
-    #             code_executor=UnsafeLocalCodeExecutor())
-    #             )
-
-    # ==============================
-    # OPTION #2
-    # USE AN MCP SERVER TO PROVIDE SKILLS
-    # ==============================
     skills_url = config.MCP_SERVER_URL_SKILLS_PROVIDER
     if not skills_url:
         msg = (
@@ -105,25 +99,27 @@ def load_tools() -> list[ToolUnion]:
     )
     tools.append(skills_provider)
 
-    shell_runner = MCPToolset(
+    config.ensure_desktop_commander_config()
+
+    desktop_commander = MCPToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
-                command="uvx",
+                command="npx",
                 args=[
-                    "--python",
-                    "3.12",
-                    "mcp-shell-server",
+                    "-y",
+                    "@wonderwhy-er/desktop-commander@latest",
+                    "--no-onboarding",
                 ],
+                cwd=str(config.DESKTOP_COMMANDER_CWD),
                 env={
-                    "ALLOW_COMMANDS": config.SHELL_RUNNER_ALLOWED_COMMANDS,
-                    "ALLOW_PATTERNS": config.SHELL_RUNNER_ALLOWED_PATTERNS,
+                    "NODE_NO_WARNINGS": "1",
                 },
             ),
             timeout=180,
         ),
-        # Optional: Filter which tools from the MCP server are exposed
+        tool_filter=config.DESKTOP_COMMANDER_TOOL_FILTER,
     )
-    tools.append(shell_runner)
+    tools.append(desktop_commander)
 
     return cast(list[ToolUnion], tools)
 
@@ -133,59 +129,34 @@ def before_tool_callback(
 ) -> dict[str, Any] | None:
     """Mutate tool call arguments before execution (workspace shell hardening).
 
-    For ``shell_execute``, forces the working directory to ``config.WORKSPACE_DIRECTORY``,
-    makes ``npx`` non-interactive, appends ``-y`` to ``npx`` ``skills add`` installs,
-    and sets timeouts (including a longer cap for skill installs).
-
-    Args:
-        tool: The tool instance about to run.
-        args: Mutable dict of argument names to values from the model; may be
-            updated in place.
-        tool_context: Runtime context (e.g. agent name); ``tool_context`` is not
-            modified.
-
-    Returns:
-        ``None`` to proceed with the (possibly updated) ``args``. Return a dict
-        only if the ADK contract requires replacing the tool result without invoking
-        the tool (this implementation always returns ``None``).
+    For ``start_process``, forces commands to run from the workspace directory,
+    makes ``npx`` non-interactive, and sets ``timeout_ms``.
     """
     tool_name = tool.name
 
-    # there seems to be a glitch in the implementation around the directory parameter.
-    # we want to ensure that the execution directory is set to the workspace directory.
-    if tool_name == "shell_execute":
-        if config.WORKSPACE_DIRECTORY:
-            args["directory"] = config.WORKSPACE_DIRECTORY
-            timeout_seconds = config.SHELL_RUNNER_TIMEOUT_SECONDS
-            command = args.get("command", [])
-            if isinstance(command, list) and command:
-                # Make npx usage non-interactive to avoid TTY prompts.
-                if command[0] == "npx" and "--yes" not in command and "-y" not in command:
-                    command = ["npx", "--yes", *command[1:]]
-
-                # Ensure skills installation never prompts for confirmation.
-                if (
-                    len(command) >= 4
-                    and command[0] == "npx"
-                    and command[2] == "skills"
-                    and command[3] == "add"
-                    and "-y" not in command
-                ):
-                    command.append("-y")
-                args["command"] = command
-
-            if (
-                isinstance(command, list)
-                and len(command) >= 4
-                and command[0] == "npx"
-                and command[2] == "skills"
-                and command[3] == "add"
-            ):
-                timeout_seconds = config.SHELL_RUNNER_SKILLS_INSTALL_TIMEOUT_SECONDS
-            args["timeout"] = timeout_seconds
-
-        else:
+    if tool_name == "start_process":
+        if not config.WORKSPACE_DIRECTORY:
             logger.warning("MCP_SKILLS_PROVIDER_WORKSPACE_DIRECTORY not set")
+            return None
+
+        command = args.get("command", "")
+        if isinstance(command, str) and command.strip():
+            command = _harden_npx_command(command)
+            command = _wrap_workspace_command(command, config.WORKSPACE_DIRECTORY)
+            args["command"] = command
+
+        timeout_seconds = config.SHELL_RUNNER_TIMEOUT_SECONDS
+        if isinstance(command, str) and _is_skills_install(command):
+            timeout_seconds = config.SHELL_RUNNER_SKILLS_INSTALL_TIMEOUT_SECONDS
+
+        timeout_ms = min(
+            timeout_seconds * 1000,
+            config.SHELL_RUNNER_MAX_TIMEOUT_MS,
+        )
+        args["timeout_ms"] = timeout_ms
+
+        if config.DESKTOP_COMMANDER_DEFAULT_SHELL:
+            args.setdefault("shell", config.DESKTOP_COMMANDER_DEFAULT_SHELL)
 
     return None
 
@@ -193,18 +164,9 @@ def before_tool_callback(
 def before_model_callback(
     callback_context: CallbackContext, llm_request: LlmRequest
 ) -> LlmResponse | None:
-    """Configure HTTP retry and optional priority / paygo headers for each LLM request.
+    """Configure HTTP retry and optional priority / paygo headers for each LLM request."""
+    sanitize_unsupported_inline_attachments(llm_request)
 
-    Args:
-        callback_context: ADK callback context for the current invocation.
-        llm_request: The outbound request; ``config`` and ``http_options`` are
-            created or updated on this object (retry policy, optional headers).
-
-    Returns:
-        ``None`` to send ``llm_request`` as updated. Return an ``LlmResponse``
-        only to short-circuit the model call with a synthetic response.
-    """
-    # Ensure request config exists before adding transport settings.
     llm_request.config = llm_request.config or types.GenerateContentConfig()
     llm_request.config.http_options = llm_request.config.http_options or types.HttpOptions()
 
@@ -216,7 +178,6 @@ def before_model_callback(
         http_status_codes=[408, 429, 500, 502, 503, 504],
     )
 
-    # We want to use PrioPaygo (Paygo is not supported for litellm mode)
     if config.ADK_AGENT_PRIORITY_PAYGO_ENABLED and not config.is_litellm_mode():
         headers = llm_request.config.http_options.headers or {}
         headers[config.ADK_AGENT_PRIORITY_PAYGO_HEADER_NAME] = (

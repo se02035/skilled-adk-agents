@@ -30,7 +30,7 @@ flowchart LR
 
     subgraph MCPServers[MCP Servers Used by Agent]
         SkillsMCP[Skills MCP Server src/mcp-skills-provider]
-        ShellMCP[Shell MCP Server mcp-shell-server shell_execute]
+        ShellMCP[Desktop Commander MCP start_process only]
     end
 
     subgraph Dependencies[Required Dependencies]
@@ -52,7 +52,7 @@ flowchart LR
     SA -->|MCP over stdio| ShellMCP
     SkillsMCP -->|list/read local skills| SKILLS
     SkillsMCP -->|requires access| FS
-    ShellMCP -->|executes allowed commands on| Compute
+    ShellMCP -->|executes shell commands on| Compute
     SKILLS -. discover new skills .-> SkillsRepo
     SA -->|LLM calls| MODEL
 
@@ -76,7 +76,7 @@ Flow summary: users interact through ADK web or A2A, the ADK agent calls two MCP
 **Requirements**
 - **Python 3.12+** (see `pyproject.toml` / `requires-python`)
 - **Git** to clone the repository
-- **Node.js and npm** (only if you use the optional `npx` steps below, e.g. the skills CLI or `npx ngrok`)
+- **Node.js and npm** (required for Desktop Commander shell MCP and optional `npx` steps such as the skills CLI or `npx ngrok`)
 
 ### 1. Create a virtual environment and install dependencies
 
@@ -140,6 +140,17 @@ LITELLM_VIRTUAL_KEY=sk-...
 - `LITELLM_VIRTUAL_KEY` — virtual key with access to the chosen model.
 
 Google Cloud / Vertex variables are not required in LiteLLM mode.
+
+#### Desktop Commander (shell MCP only)
+
+The skill agent uses [Desktop Commander](https://github.com/wonderwhy-er/DesktopCommanderMCP) **only** for shell execution (`start_process`, etc.). Skill discovery and documentation always go through the Skills MCP (`list_skills`, `read_skill`). Desktop Commander filesystem tools are not exposed to the agent.
+
+- **Node.js and npm** must be installed.
+- On first run, `config.py` creates `.desktop-commander/config.json` at the repo root from your `MCP_DESKTOP_COMMANDER_*` env vars (see `.env.example`).
+- Terminal commands run with your user shell permissions — treat this as full local machine access during development.
+- MCP tool calls are often capped near **60 seconds** regardless of `MCP_SHELL_RUNNER_SKILLS_INSTALL_TIMEOUT_SECONDS`.
+
+See `src/skill-agent/app/desktop-commander.config.json.example` for the config shape.
 
 ### 4. (Optional) Pre-install agent skills
 

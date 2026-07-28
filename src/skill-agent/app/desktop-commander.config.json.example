@@ -1,0 +1,6 @@
+{
+  "blockedCommands": ["rm -rf /", "rm -rf ~", "sudo", "shutdown", "reboot"],
+  "defaultShell": "/bin/zsh",
+  "allowedDirectories": ["/absolute/path/to/skilled-adk-agents"],
+  "telemetryEnabled": false
+}

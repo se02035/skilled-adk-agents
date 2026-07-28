@@ -8,5 +8,7 @@ __pycache__
 .gemini
 skills-lock.json
 node_modules
+.desktop-commander/
 *.docx
 *.png
+uploads/
