@@ -1,0 +1,14 @@
+{
+  "blockedCommands": [
+    "rm -rf /",
+    "rm -rf ~",
+    "sudo",
+    "shutdown",
+    "reboot"
+  ],
+  "defaultShell": "/bin/zsh",
+  "allowedDirectories": [
+    "/Users/oliverli/Dev/skilled-adk-agents"
+  ],
+  "telemetryEnabled": false
+}
